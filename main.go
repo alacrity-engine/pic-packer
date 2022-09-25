@@ -13,7 +13,6 @@ import (
 
 	codec "github.com/alacrity-engine/resource-codec"
 	"github.com/boltdb/bolt"
-	"github.com/faiface/pixel"
 )
 
 var (
@@ -30,7 +29,7 @@ func parseFlags() {
 	flag.Parse()
 }
 
-func loadPicture(pic string) (*pixel.PictureData, error) {
+func loadPicture(pic string) (*codec.Picture, error) {
 	file, err := os.Open(pic)
 
 	if err != nil {
@@ -44,7 +43,7 @@ func loadPicture(pic string) (*pixel.PictureData, error) {
 		return nil, err
 	}
 
-	return pixel.PictureDataFromImage(img), nil
+	return codec.NewPictureFromImage(img)
 }
 
 func main() {
@@ -81,8 +80,12 @@ func main() {
 			spritesheetInfo.Name()))
 		handleError(err)
 
+		// Compress the spritesheet picture.
+		compressedSpritesheet, err := spritesheet.Compress()
+		handleError(err)
+
 		// Serialize picture data to byte array.
-		spritesheetBytes, err := codec.PictureDataToBytes(spritesheet)
+		spritesheetBytes, err := compressedSpritesheet.ToBytes()
 		handleError(err)
 
 		// Save the spritesheet to the database.
