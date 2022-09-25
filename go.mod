@@ -4,8 +4,7 @@ go 1.19
 
 require (
 	github.com/alacrity-engine/resource-codec v0.0.0-20220925115730-3b72b41870e5
-	github.com/boltdb/bolt v1.3.1
-	github.com/faiface/pixel v0.10.0
+	go.etcd.io/bbolt v1.3.6
 )
 
 require (

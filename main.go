@@ -12,7 +12,7 @@ import (
 	"strings"
 
 	codec "github.com/alacrity-engine/resource-codec"
-	"github.com/boltdb/bolt"
+	bolt "go.etcd.io/bbolt"
 )
 
 var (
