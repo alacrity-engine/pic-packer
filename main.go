@@ -6,7 +6,6 @@ import (
 	"image"
 	_ "image/jpeg"
 	_ "image/png"
-	"io/ioutil"
 	"os"
 	"path"
 	"strings"
@@ -15,21 +14,23 @@ import (
 	bolt "go.etcd.io/bbolt"
 )
 
+const bucketName = "pictures"
+
 var (
-	spritesheetsPath string
+	picturesPath     string
 	resourceFilePath string
 )
 
 func parseFlags() {
-	flag.StringVar(&spritesheetsPath, "spritesheets", "./spritesheets",
-		"Path to the directory where spritesheets are stored.")
+	flag.StringVar(&picturesPath, "pictures", "./pictures",
+		"Path to the directory where pictures are stored.")
 	flag.StringVar(&resourceFilePath, "out", "./stage.res",
-		"Resource file to store animations and spritesheets.")
+		"Resource file to store animations and pictures.")
 
 	flag.Parse()
 }
 
-func loadPicture(pic string) (*codec.Picture, error) {
+func loadPicture(pic string) (*codec.PictureData, error) {
 	file, err := os.Open(pic)
 
 	if err != nil {
@@ -49,17 +50,17 @@ func loadPicture(pic string) (*codec.Picture, error) {
 func main() {
 	parseFlags()
 
-	// Get spritesheets from the directory.
-	spritesheets, err := ioutil.ReadDir(spritesheetsPath)
+	// Get pictures from the directory.
+	pictures, err := os.ReadDir(picturesPath)
 	handleError(err)
 	// Open the resource file.
 	resourceFile, err := bolt.Open(resourceFilePath, 0666, nil)
 	handleError(err)
 	defer resourceFile.Close()
 
-	// Create collections for spritesheets and animations.
+	// Create collections for pictures.
 	err = resourceFile.Update(func(tx *bolt.Tx) error {
-		_, err = tx.CreateBucketIfNotExists([]byte("spritesheets"))
+		_, err = tx.CreateBucketIfNotExists([]byte(bucketName))
 
 		if err != nil {
 			return err
@@ -69,36 +70,36 @@ func main() {
 	})
 	handleError(err)
 
-	for _, spritesheetInfo := range spritesheets {
-		if spritesheetInfo.IsDir() {
+	for _, pictureInfo := range pictures {
+		if pictureInfo.IsDir() {
 			fmt.Println("Error: directory found in the spritesheets folder.")
 			os.Exit(1)
 		}
 
-		// Load the spritesheet picture.
-		spritesheet, err := loadPicture(path.Join(spritesheetsPath,
-			spritesheetInfo.Name()))
+		// Load the picture.
+		pic, err := loadPicture(path.Join(picturesPath,
+			pictureInfo.Name()))
 		handleError(err)
 
-		// Compress the spritesheet picture.
-		compressedSpritesheet, err := spritesheet.Compress()
+		// Compress the picture.
+		compressedPicture, err := pic.Compress()
 		handleError(err)
 
 		// Serialize picture data to byte array.
-		spritesheetBytes, err := compressedSpritesheet.ToBytes()
+		pictureBytes, err := compressedPicture.ToBytes()
 		handleError(err)
 
-		// Save the spritesheet to the database.
-		spritesheetID := strings.TrimSuffix(path.Base(spritesheetInfo.Name()),
-			path.Ext(spritesheetInfo.Name()))
+		// Save the picture to the database.
+		pictureID := strings.TrimSuffix(path.Base(pictureInfo.Name()),
+			path.Ext(pictureInfo.Name()))
 		err = resourceFile.Update(func(tx *bolt.Tx) error {
-			buck := tx.Bucket([]byte("spritesheets"))
+			buck := tx.Bucket([]byte(bucketName))
 
 			if buck == nil {
-				return fmt.Errorf("no spritesheets bucket present")
+				return fmt.Errorf("no pictures bucket present")
 			}
 
-			err = buck.Put([]byte(spritesheetID), spritesheetBytes)
+			err = buck.Put([]byte(pictureID), pictureBytes)
 
 			if err != nil {
 				return err
