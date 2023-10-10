@@ -101,7 +101,9 @@ func main() {
 			continue
 		}
 
-		if !strings.HasSuffix(fsEntry.Entry.Name(), ".anim.yml") {
+		if !strings.HasSuffix(strings.ToLower(fsEntry.Entry.Name()), ".png") &&
+			!strings.HasSuffix(strings.ToLower(fsEntry.Entry.Name()), ".jpg") &&
+			!strings.HasSuffix(strings.ToLower(fsEntry.Entry.Name()), ".jpeg") {
 			continue
 		}
 
